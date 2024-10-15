@@ -189,12 +189,15 @@ function pas_dlm_get_debug_log_content($line_count = 100) {
         // Ensure $line_count doesn't exceed the total number of lines
         $start_line = max(0, $last_line - $line_count);
         $lines = new LimitIterator($file, $start_line, $last_line);
-        $log_lines = array_reverse(iterator_to_array($lines));
+        $log_lines = iterator_to_array($lines);
+        $log_lines = array_reverse($log_lines); // Reverse to get chronological order
 
         if ($log_lines) {
             $parsed_logs = array();
             $pattern = '/\[(.*?)\] (.+?):\s+(.+)/';
 
+            // Assign an index to each line after reversing
+            $index = 1; // Start with index 1
             foreach ($log_lines as $line) {
                 $line = trim($line);
                 if (preg_match($pattern, $line, $matches)) {
@@ -203,11 +206,12 @@ function pas_dlm_get_debug_log_content($line_count = 100) {
                     $error_type = $matches[2];
                     $error_message = $matches[3];
                     $parsed_logs[] = array(
-                        'timestamp' => $timestamp,
+                        'index' => $index,  // Assign index here
                         'datetime' => $datetime,
                         'error_type' => $error_type,
                         'error_message' => $error_message
                     );
+                    $index++; // Increase the index for the next log
                 } else {
                     // Handle lines that don't match the pattern
                     if (!empty($parsed_logs)) {
@@ -216,14 +220,10 @@ function pas_dlm_get_debug_log_content($line_count = 100) {
                 }
             }
 
-            usort($parsed_logs, function ($a, $b) {
-                return $b['timestamp'] - $a['timestamp'];
-            });
-
             $output = '<table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr>
-                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Datetime</th>
+                                <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;width: 150px;">Datetime</th>
                                 <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Error Type</th>
                                 <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">Error Message</th>
                             </tr>
