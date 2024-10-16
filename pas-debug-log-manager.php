@@ -43,11 +43,11 @@ function pas_dlm_display_debug_log_reverse() {
     // Display the size of the debug log file
     if ($wp_filesystem->exists($log_file)) {
         $file_size = $wp_filesystem->size($log_file);
-        echo '<p>Log file size: ' . size_format($file_size) . '</p>'; // Display file size
+        echo '<p>Log file size: ' . esc_html(size_format($file_size)) . '</p>'; // Display file size
     }
 
     // Auto-refresh and line count selection
-    echo '<label><input type="checkbox" id="auto-refresh" name="auto-refresh"> Auto-refresh</label>';
+    echo '<label><input type="checkbox" id="auto-refresh" name="auto-refresh"> ' . esc_html__('Auto-refresh', 'pas-debug-log-manager') . '</label>';
     echo ' every <select id="refresh-interval" name="refresh-interval" disabled>
         <option value="5000">5 seconds</option>
         <option value="10000">10 seconds</option>
@@ -78,15 +78,13 @@ function pas_dlm_display_debug_log_reverse() {
     echo '</form>';
 
     // Handle log clearing
-    if (isset($_POST['clear_log']) && current_user_can('manage_options')) {
-        check_admin_referer('pas_dlm_clear_debug_log_nonce');
+    if (isset($_POST['clear_log']) && check_admin_referer('pas_dlm_clear_debug_log_nonce') && current_user_can('manage_options')) {
         $wp_filesystem->put_contents($log_file, '');
-        echo '<p style="color: green;">Logs have been cleared.</p>';
+        echo '<p style="color: green;">' . esc_html__('Logs have been cleared.', 'pas-debug-log-manager') . '</p>';
     }
 
     // Handle debug log toggle
-    if (isset($_POST['toggle_debug_log']) && current_user_can('manage_options')) {
-        check_admin_referer('pas_dlm_toggle_debug_log_nonce');
+    if (isset($_POST['toggle_debug_log']) && check_admin_referer('pas_dlm_toggle_debug_log_nonce') && current_user_can('manage_options')) {
         pas_dlm_toggle_debug_log();
     }
 
@@ -103,65 +101,6 @@ function pas_dlm_display_debug_log_reverse() {
     echo '<div id="debug-log-content">';
     echo pas_dlm_get_debug_log_content();
     echo '</div>';
-
-    ?>
-    <script type="text/javascript">
-        jQuery(document).ready(function($) {
-            var refreshInterval;
-            var refreshStatus = $('#refresh-status');
-            var autoRefreshCheckbox = $('#auto-refresh');
-            var refreshIntervalSelect = $('#refresh-interval');
-            var lineCountSelect = $('#line-count');
-
-            autoRefreshCheckbox.change(function() {
-                if ($(this).is(':checked')) {
-                    refreshIntervalSelect.prop('disabled', false);
-                    startAutoRefresh();
-                } else {
-                    refreshIntervalSelect.prop('disabled', true);
-                    stopAutoRefresh();
-                }
-            });
-
-            refreshIntervalSelect.change(function() {
-                if (autoRefreshCheckbox.is(':checked')) {
-                    stopAutoRefresh();
-                    startAutoRefresh();
-                }
-            });
-
-            lineCountSelect.change(function() {
-                refreshLog();
-            });
-
-            function startAutoRefresh() {
-                var interval = parseInt(refreshIntervalSelect.val());
-                var intervalText = refreshIntervalSelect.find('option:selected').text();
-                refreshStatus.text('(Refreshing every ' + intervalText + ')');
-                refreshInterval = setInterval(refreshLog, interval);
-            }
-
-            function stopAutoRefresh() {
-                refreshStatus.text('');
-                clearInterval(refreshInterval);
-            }
-
-            function refreshLog() {
-                $.ajax({
-                    url: ajaxurl,
-                    data: {
-                        action: 'pas_dlm_refresh_debug_log',
-                        line_count: lineCountSelect.val()
-                    },
-                    success: function(response) {
-                        $('#debug-log-content').html(response);
-                    }
-                });
-            }
-        });
-    </script>
-    <?php
-
     echo '</div>';
 }
 
@@ -311,7 +250,11 @@ add_action('admin_menu', 'pas_dlm_add_debug_log_menu_item');
 add_action('wp_ajax_pas_dlm_refresh_debug_log', 'pas_dlm_ajax_refresh_debug_log');
 
 function pas_dlm_ajax_refresh_debug_log() {
-    $line_count = isset($_REQUEST['line_count']) && !empty($_REQUEST['line_count']) ? $_REQUEST['line_count'] : 100;
+    $line_count = isset($_REQUEST['line_count']) && !empty($_REQUEST['line_count']) ? intval($_REQUEST['line_count']) : 100;
+
+    if (!in_array($line_count, array(100, 500, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000), true)) {
+        $line_count = 100; // Set default if validation fails
+    }
 
     echo pas_dlm_get_debug_log_content($line_count);
 
@@ -348,3 +291,20 @@ function pas_dlm_check_and_backup_log_file() {
         echo '<p style="color: red;">Debug log file does not exist.</p>';
     }
 }
+
+function pas_dlm_enqueue_admin_scripts($hook) {
+    // Only enqueue on the PAS Debug Log Manager page
+    if ($hook !== 'toplevel_page_pas-debug-log-manager') {
+        return;
+    }
+
+    // Register and enqueue JavaScript
+    wp_register_script('pas_dlm_script', plugins_url('/assets/js/pas-dlm-script.js', __FILE__), array('jquery'), PAS_DEBUG_LOG_VERSION, true);
+    wp_enqueue_script('pas_dlm_script');
+
+    // Register and enqueue CSS
+    wp_register_style('pas_dlm_style', plugins_url('/assets/css/pas-dlm-style.css', __FILE__), array(), PAS_DEBUG_LOG_VERSION);
+    wp_enqueue_style('pas_dlm_style');
+}
+
+add_action('admin_enqueue_scripts', 'pas_dlm_enqueue_admin_scripts');
