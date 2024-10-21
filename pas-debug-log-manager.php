@@ -4,7 +4,7 @@ Plugin Name: PAS Debug Log Manager
 Text Domain: pas-debug-log-manager
 Description: Simple plugin to view and manage debug log
 Author: Azeez
-Version: 1.0.02
+Version: 1.0.03
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 */
