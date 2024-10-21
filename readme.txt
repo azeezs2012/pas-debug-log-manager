@@ -24,15 +24,9 @@ You can toggle debug logging from the "Debug Log" admin page by checking or unch
 On the "Debug Log" admin page, click the "Clear Logs" button to delete the contents of the debug log.
 
 == Changelog ==
+
 = 1.0.0 =
 * Initial release of the Debug Log plugin.
-* Added ability to view debug logs.
-* Added toggle to enable or disable debug logging.
-* Added option to clear the debug log.
-
-== Upgrade Notice ==
-= 1.0.0 =
-Initial release of the Debug Log plugin.
 
 == License ==
 This plugin is licensed under the GPLv2 or later. You are free to use, modify, and distribute this plugin as long as you adhere to the GPLv2 license.
