@@ -7,6 +7,9 @@ Stable tag: 1.0.02
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
+== Short Description ==
+A WordPress plugin to easily manage debug logs by toggling debug logging, clearing logs, and viewing logs in a formatted way.
+
 == Description ==
 A simple WordPress plugin that allows users to view and manage the WordPress debug log. Provides options to clear the log, toggle debug logging, and display logs in a formatted view.
 
